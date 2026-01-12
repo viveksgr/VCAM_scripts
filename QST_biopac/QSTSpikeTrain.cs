@@ -1,15 +1,14 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-
 
 [System.Serializable]
 public class YokeDurationsPayload
 {
     public string ctx;
     public string mode;
-    public double[] durations; // seconds since train start; <=0 means no abort
+    public double[] durations; // seconds since train start
 }
 
 
@@ -50,6 +49,11 @@ public class QSTSpikeTrain : MonoBehaviour
     public bool yokePlayback = false;     // set true after calling LoadYokeFiles(...)
     [Tooltip("Template or pattern, e.g. '{subject}_{session}_{maze}_Y*_yoke.json'")]
     public string yokePattern = "{subject}_{session}_{maze}_Y*_yoke.json";
+    [Tooltip("If set, load abort times from this durations JSON (your computed file).")]
+    public string yokeDurationsJsonPath = "";
+    [Tooltip("If true, yoke playback uses the durations JSON instead of *_yoke.json payloads.")]
+    public bool yokeUseDurationsJson = false;
+
 
     // --- internal state ---
     private string typed = "";
@@ -82,6 +86,59 @@ public class QSTSpikeTrain : MonoBehaviour
         yokePlayback = false;
     }
 
+    public bool LoadYokeDurationsJson(string filePathTemplateOrAbsolute = null)
+    {
+        try
+        {
+            string p = string.IsNullOrEmpty(filePathTemplateOrAbsolute) ? yokeDurationsJsonPath : filePathTemplateOrAbsolute;
+            if (string.IsNullOrEmpty(p))
+            {
+                Debug.LogWarning("[QST] LoadYokeDurationsJson: empty path.");
+                return false;
+            }
+
+            // Reuse your existing token/path resolver (so {subject},{session},{maze} still work)
+            string full = ResolveConcretePath(p);
+
+            if (!File.Exists(full))
+            {
+                Debug.LogWarning($"[QST] Durations JSON not found: {full}");
+                return false;
+            }
+
+            var json = File.ReadAllText(full);
+            var payload = JsonUtility.FromJson<YokeDurationsPayload>(json);
+
+            if (payload == null || payload.durations == null || payload.durations.Length == 0)
+            {
+                Debug.LogWarning($"[QST] Durations JSON invalid/empty: {full}");
+                return false;
+            }
+
+            _yokeQueue.Clear();
+            _yokePtr = 0;
+
+            foreach (var d in payload.durations)
+            {
+                // Treat <=0 as “no abort” sentinel
+                float sec = (float)d;
+                _yokeQueue.Add(sec > 0f ? sec : -1f);
+            }
+
+            yokePlayback = true;
+            yokeUseDurationsJson = true;
+
+            Debug.Log($"[QST] Durations yoke loaded: {Path.GetFileName(full)} (trains={_yokeQueue.Count}) ctx={payload.ctx} mode={payload.mode}");
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[QST] LoadYokeDurationsJson failed: " + e.Message);
+            return false;
+        }
+    }
+
+
     /// <summary>
     /// Load one or more yoke files. Supports patterns and tokens {subject},{session},{maze}.
     /// Appends all found files (sorted by write time ascending) to the playback queue.
@@ -91,63 +148,9 @@ public class QSTSpikeTrain : MonoBehaviour
     {
         if (yokeUseDurationsJson)
         {
-            Debug.Log(\"[QST] LoadYokeFiles ignored because yokeUseDurationsJson=true.\");
+            Debug.Log("[QST] LoadYokeFiles ignored because yokeUseDurationsJson=true.");
             return (_yokeQueue.Count > 0);
         }
-
-
-// --------- Durations JSON yoke (from events-derived payload) ---------
-public bool LoadYokeDurationsJson(string filePathTemplateOrAbsolute = null)
-{
-    try
-    {
-        string p = string.IsNullOrEmpty(filePathTemplateOrAbsolute) ? yokeDurationsJsonPath : filePathTemplateOrAbsolute;
-        if (string.IsNullOrEmpty(p))
-        {
-            Debug.LogWarning("[QST] LoadYokeDurationsJson: empty path.");
-            return false;
-        }
-
-        // Reuse resolver so {subject},{session},{maze} are supported and it anchors to DataLogger.OutputFolder
-        string full = ResolveConcretePath(p);
-
-        if (!File.Exists(full))
-        {
-            Debug.LogWarning($"[QST] Durations JSON not found: {full}");
-            return false;
-        }
-
-        var json = File.ReadAllText(full);
-        var payload = JsonUtility.FromJson<YokeDurationsPayload>(json);
-
-        if (payload == null || payload.durations == null || payload.durations.Length == 0)
-        {
-            Debug.LogWarning($"[QST] Durations JSON invalid/empty: {full}");
-            return false;
-        }
-
-        _yokeQueue.Clear();
-        _yokePtr = 0;
-
-        foreach (var d in payload.durations)
-        {
-            float sec = (float)d;           // keep high precision from JSON (double -> float)
-            _yokeQueue.Add(sec > 0f ? sec : -1f); // <=0 means "no abort"
-        }
-
-        yokePlayback = true;
-        yokeUseDurationsJson = true;
-
-        Debug.Log($"[QST] Durations yoke loaded: {Path.GetFileName(full)} (trains={_yokeQueue.Count}) ctx={payload.ctx} mode={payload.mode}");
-        return true;
-    }
-    catch (System.Exception e)
-    {
-        Debug.LogError("[QST] LoadYokeDurationsJson failed: " + e.Message);
-        return false;
-    }
-}
-
 
         try
         {

@@ -341,7 +341,6 @@ public class SessionDirectorAdditive : MonoBehaviour
     // In SessionDirector (or wherever you switch conditions)
 
     [SerializeField] private int roundIndex = 0;  // increment each time you start a new Control round
-    [SerializeField] private string donorSubjectId = ""; // optional: if yoking between subjects
 
     private ThermodeCondition _activeCond = ThermodeCondition.NoThermode;
 
