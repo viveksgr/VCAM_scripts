@@ -367,6 +367,8 @@ public class SessionDirectorAdditive : MonoBehaviour
                 // 🔹 ADD THESE LINES
                 spikeTrain.yokeUseDurationsJson = true;
                 spikeTrain.LoadYokeDurationsJson(yokeDurationsJsonPath);
+                // No magic abort code (safer); if you insist on a decoy, use "665".
+                spikeTrain.SetStopCode("665");
 
                 DataLogger.Instance?.LogEvent("THERMODE_MODE", "NO_CONTROL");
                 break;
