@@ -5,7 +5,9 @@ public enum ThermodeCondition
 {
     NoThermode,
     ThermodeControl,
-    ThermodeNoControl
+    ThermodeNoControl,
+    ThermodeNoControl_Test
+
 }
 
 [System.Serializable]

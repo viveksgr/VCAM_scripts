@@ -60,6 +60,11 @@ public class SessionDirectorAdditive : MonoBehaviour
     [Tooltip("Durations JSON used to yoke ThermodeNoControl. Can be absolute or use tokens like {subject},{session},{maze}.")]
     public string yokeDurationsJsonPath = "";
 
+    public SessionUI sessionUI;   // drag in inspector
+    private bool _testSubscribed = false;
+    private ThermodeCondition _currentThermodeCond;
+
+
     // --- internal state ---
     private readonly Dictionary<ContextId, Scene> scenes = new();
     private readonly Dictionary<ContextId, ContextDescriptor> descs = new();
@@ -346,6 +351,7 @@ public class SessionDirectorAdditive : MonoBehaviour
 
     private void ApplyThermodeCondition(ThermodeCondition cond)
     {
+        _currentThermodeCond = cond;   // ✅ correct place
         if (!spikeTrain) return;
 
         switch (cond)
@@ -372,6 +378,25 @@ public class SessionDirectorAdditive : MonoBehaviour
 
                 DataLogger.Instance?.LogEvent("THERMODE_MODE", "NO_CONTROL");
                 break;
+            case ThermodeCondition.ThermodeNoControl_Test:
+                spikeTrain.enabled = true;
+
+                // ensure no yoke behavior
+                spikeTrain.yokeUseDurationsJson = false;   // important: record / free control
+
+                // ensure subject cannot stop it
+                spikeTrain.SetStopCode("665"); // or null/"" if you prefer disabling manual stop elsewhere
+
+                DataLogger.Instance?.LogEvent("THERMODE_MODE", "NO_CONTROL_TEST");
+
+                // subscribe once
+                if (!_testSubscribed)
+                {
+                    spikeTrain.OnTrainFinished += HandleTrainFinished_TestMode;
+                    _testSubscribed = true;
+                }
+                break;
+
         }
 
         if (logVerbose)
@@ -391,6 +416,17 @@ public class SessionDirectorAdditive : MonoBehaviour
             roundIndex++; // next CONTROL round will be Y01, Y02, ...
         }
     }
+
+    private void HandleTrainFinished_TestMode(int trainIdx, bool aborted)
+    {
+        // Only do this for the test condition
+        if (_currentThermodeCond != ThermodeCondition.ThermodeNoControl_Test) return;
+
+        // launch rating
+        DataLogger.Instance?.LogEvent("PAIN_RATING_PROMPT", "trainIdx", trainIdx.ToString(), "aborted", aborted ? "1" : "0");
+        if (sessionUI != null) sessionUI.ShowPainRating(trainIdx);
+    }
+
 
     private ContextInstruction GetInstructions(ContextId id)
     {

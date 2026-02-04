@@ -53,6 +53,7 @@ public class QSTSpikeTrain : MonoBehaviour
     public string yokeDurationsJsonPath = "";
     [Tooltip("If true, yoke playback uses the durations JSON instead of *_yoke.json payloads.")]
     public bool yokeUseDurationsJson = false;
+    public System.Action<int, bool> OnTrainFinished; // (trainIndex, aborted)
 
 
     // --- internal state ---
@@ -309,6 +310,8 @@ public class QSTSpikeTrain : MonoBehaviour
 
             Debug.Log($"[QST] Train {trainCount + 1} complete. AbortedThisTrain={abortThisTrain}");
             DataLogger.Instance?.TrainEnd(trainCount, aborted: abortThisTrain);
+            OnTrainFinished?.Invoke(trainCount, abortThisTrain);
+
 
             _trainIndex++;
             if (yokePlayback) _yokePtr++; // consume one yoke entry per train

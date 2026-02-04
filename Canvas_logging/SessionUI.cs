@@ -28,6 +28,21 @@ public class SessionUI : MonoBehaviour
     [Header("Behavior")]
     public bool pauseDuringOverlay = true;
 
+    public GameObject painVasPanel;  // existing panel object
+    public VASInput painVasInput;    // existing script on that panel
+
+    public void ShowPainRating(int trainIdx)
+    {
+        // if you want to tag which train this belongs to:
+        DataLogger.Instance?.LogEvent("PAIN_RATING_SHOW", "trainIdx", trainIdx.ToString());
+
+        painVasPanel.SetActive(true);
+
+        // If you want VASInput to log with trainIdx, add a setter there (optional)
+        // painVasInput.SetContext(trainIdx);
+    }
+
+
     // ----- PLEASE WAIT -----
     public void ShowPleaseWaitInstant(string message = "Please wait…")
     {
