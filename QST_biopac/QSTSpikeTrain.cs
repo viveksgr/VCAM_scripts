@@ -61,6 +61,7 @@ public class QSTSpikeTrain : MonoBehaviour
     [Tooltip("If true, yoke playback uses the durations JSON instead of *_yoke.json payloads.")]
     public bool yokeUseDurationsJson = false;
     public System.Action<int, bool> OnTrainFinished; // (trainIndex, aborted)
+    public bool autoStartOnEnable = false; // let SessionDirector explicitly start trains at block start
 
 
     // --- internal state ---
@@ -225,7 +226,7 @@ public class QSTSpikeTrain : MonoBehaviour
     {
         if (qst == null) qst = FindObjectOfType<QSTController>();
         qst?.TryOpen();
-        if (_runner == null) _runner = StartCoroutine(Run());
+        if (autoStartOnEnable && _runner == null) _runner = StartCoroutine(Run());
     }
 
     void OnDisable()

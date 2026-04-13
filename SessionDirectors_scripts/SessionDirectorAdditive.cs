@@ -367,30 +367,31 @@ public class SessionDirectorAdditive : MonoBehaviour
                 break;
 
             case ThermodeCondition.ThermodeControl:
-                spikeTrain.enabled = true;
+                spikeTrain.ClearYokePlayback();
                 spikeTrain.yokeUseDurationsJson = false;   // important: record / free control
+                spikeTrain.ForceStart();
                 DataLogger.Instance?.LogEvent("THERMODE_MODE", "CONTROL");
                 break;
 
             case ThermodeCondition.ThermodeNoControl:
-                spikeTrain.enabled = true;
-
-                // 🔹 ADD THESE LINES
+                spikeTrain.ClearYokePlayback();
                 spikeTrain.yokeUseDurationsJson = true;
                 spikeTrain.LoadYokeDurationsJson(yokeDurationsJsonPath);
                 // No magic abort code (safer); if you insist on a decoy, use "665".
                 spikeTrain.SetStopCode("665");
+                spikeTrain.ForceStart();
 
                 DataLogger.Instance?.LogEvent("THERMODE_MODE", "NO_CONTROL");
                 break;
             case ThermodeCondition.ThermodeNoControl_Test:
-                spikeTrain.enabled = true;
+                spikeTrain.ClearYokePlayback();
 
                 // ensure no yoke behavior
                 spikeTrain.yokeUseDurationsJson = false;   // important: record / free control
 
                 // ensure subject cannot stop it
                 spikeTrain.SetStopCode("665"); // or null/"" if you prefer disabling manual stop elsewhere
+                spikeTrain.ForceStart();
 
                 DataLogger.Instance?.LogEvent("THERMODE_MODE", "NO_CONTROL_TEST");
 
