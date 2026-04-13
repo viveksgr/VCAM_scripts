@@ -36,6 +36,9 @@ public class SessionUI : MonoBehaviour
         // if you want to tag which train this belongs to:
         DataLogger.Instance?.LogEvent("PAIN_RATING_SHOW", "trainIdx", trainIdx.ToString());
 
+        if (painVasInput != null)
+            painVasInput.Configure("pain", "How much pain did you feel?");
+
         painVasPanel.SetActive(true);
 
         // If you want VASInput to log with trainIdx, add a setter there (optional)
