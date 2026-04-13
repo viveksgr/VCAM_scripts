@@ -354,6 +354,10 @@ public class SessionDirectorAdditive : MonoBehaviour
         _currentThermodeCond = cond;   // ✅ correct place
         if (!spikeTrain) return;
 
+        // default off unless explicitly NO_CONTROL_TEST
+        spikeTrain.enableNoControlTestHalfDeg = (cond == ThermodeCondition.ThermodeNoControl_Test);
+
+
         switch (cond)
         {
             case ThermodeCondition.NoThermode:

@@ -23,6 +23,12 @@ public class QSTSpikeTrain : MonoBehaviour
     public float endTempC = 49f;
     public float stepC = 1f;
 
+    [Header("NO_CONTROL_TEST: per-train temp jitter")]
+    public bool enableNoControlTestHalfDeg = false;   // set by SessionDirector ONLY in NO_CONTROL_TEST
+    public float testDeltaC = -0.5f;                  // applied with 50% probability per train
+    private float _trainTempOffsetC = 0f;             // current train offset
+
+
     [Header("Per-train settings")]
     public int maxSpikes = 10;            // set 11 for 39..49 inclusive
     public int startSurface = 1;          // cycles 1→5 per spike
@@ -257,6 +263,19 @@ public class QSTSpikeTrain : MonoBehaviour
             if (sendTrainStartPulse && lpt != null) lpt.SendPulse();
             DataLogger.Instance?.TrainStart(trainCount);
 
+            // --- NO_CONTROL_TEST: choose per-train temperature offset (coin flip) ---
+            _trainTempOffsetC = 0f;
+            if (enableNoControlTestHalfDeg)
+            {
+                _trainTempOffsetC = (UnityEngine.Random.value < 0.5f) ? testDeltaC : 0f;
+
+                // log once per train so you can reconstruct delivered temperature
+                DataLogger.Instance?.LogEvent("TRAIN_TEMP_OFFSET", "train", trainCount.ToString(),
+                    "deltaC", _trainTempOffsetC.ToString("F1"));
+            }
+
+
+
             if (qst != null) qst.SetBaseTemperature(baselineC);
 
             // Planned abort from yoke (one per train)
@@ -266,6 +285,7 @@ public class QSTSpikeTrain : MonoBehaviour
 
             int sent = 0;
             float t = startTempC;
+            float tDelivered = t + _trainTempOffsetC;
 
             while (!abortThisTrain && sent < maxSpikes && t <= endTempC + 1e-3f)
             {
@@ -278,12 +298,13 @@ public class QSTSpikeTrain : MonoBehaviour
                 }
                 int surf = 0; // 1..5 cycling
                 // int surf = 1 + ((startSurface - 1 + sent) % 5); // 1..5 cycling
-                Debug.Log($"[QST] Train {trainCount + 1} | Spike {sent + 1}: {t:F1}°C on surface {surf}");
-                DataLogger.Instance?.SpikeStart(trainCount, sent, surf, t, spikeDurationMs);
+
+                Debug.Log($"[QST] Train {trainCount + 1} | Spike {sent + 1}: {tDelivered:F1}°C (nom {t:F1}, off {_trainTempOffsetC:F1}) on surface {surf}");
+                DataLogger.Instance?.SpikeStart(trainCount, sent, surf, tDelivered, spikeDurationMs);
 
                 if (qst != null)
                 {
-                    qst.SetTargetTemperature(t, surf);
+                    qst.SetTargetTemperature(tDelivered, surf);
                     qst.SetDuration(spikeDurationMs, surf);
                     qst.StartStimulation();
                 }
