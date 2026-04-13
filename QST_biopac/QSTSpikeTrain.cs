@@ -54,9 +54,9 @@ public class QSTSpikeTrain : MonoBehaviour
 
     [Header("Yoke playback (NoControl)")]
     public bool yokePlayback = false;     // set true after calling LoadYokeFiles(...)
-    [Tooltip("Template or pattern, e.g. '{subject}_{session}_{maze}_Y*_yoke.json'")]
+    [HideInInspector]
     public string yokePattern = "{subject}_{session}_{maze}_Y*_yoke.json";
-    [Tooltip("If set, load abort times from this durations JSON (your computed file).")]
+    [HideInInspector]
     public string yokeDurationsJsonPath = "";
     [Tooltip("If true, yoke playback uses the durations JSON instead of *_yoke.json payloads.")]
     public bool yokeUseDurationsJson = false;

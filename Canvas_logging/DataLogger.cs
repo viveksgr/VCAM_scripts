@@ -46,8 +46,10 @@ public class DataLogger : MonoBehaviour
     [NonSerialized] public int lever3State;
 
     // -------- Yoke accumulation (per CONTROL round) --------
-    [Header("Yoke control (managed by SessionDirector)")]
+    // Yoke bookkeeping is controlled in code by SessionDirector.
+    [HideInInspector]
     public bool yokeActive = false;      // true only during ThermodeControl rounds
+    [HideInInspector]
     public int yokeRoundIndex = 0;      // increment each time you start a new control round
 
     private readonly List<float?> yokeAbortOffsetsSec = new List<float?>();
