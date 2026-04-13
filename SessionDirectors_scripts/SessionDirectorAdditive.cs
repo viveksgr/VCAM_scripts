@@ -352,6 +352,7 @@ public class SessionDirectorAdditive : MonoBehaviour
     private void ApplyThermodeCondition(ThermodeCondition cond)
     {
         _currentThermodeCond = cond;   // ✅ correct place
+        _activeCond = cond;
         if (!spikeTrain) return;
 
         // default off unless explicitly NO_CONTROL_TEST

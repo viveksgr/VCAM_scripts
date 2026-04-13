@@ -46,6 +46,7 @@ public class QSTSpikeTrain : MonoBehaviour
     [Header("Repeat trains")]
     public bool repeatTrains = true;      // keep restarting after a gap
     public float interTrainGapSec = 20f;  // gap between trains
+    public float interTrainGapJitterSec = 0f; // uniform +/- jitter applied to the gap
     public int maxTrains = 0;             // 0 = infinite; otherwise limit
 
     [Header("Emergency stop (per-train)")]
@@ -339,7 +340,15 @@ public class QSTSpikeTrain : MonoBehaviour
             trainCount++;
 
             if (!repeatTrains) break;
-            if (interTrainGapSec > 0f) yield return new WaitForSeconds(interTrainGapSec);
+            if (interTrainGapSec > 0f)
+            {
+                float gapSec = interTrainGapSec;
+                if (interTrainGapJitterSec > 0f)
+                    gapSec += Random.Range(-interTrainGapJitterSec, interTrainGapJitterSec);
+
+                gapSec = Mathf.Max(0f, gapSec);
+                yield return new WaitForSeconds(gapSec);
+            }
         }
 
         Debug.Log($"[QST] All done. Trains run: {trainCount}");
