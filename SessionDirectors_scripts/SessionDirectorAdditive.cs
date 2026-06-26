@@ -213,6 +213,7 @@ public class SessionDirectorAdditive : MonoBehaviour
         respawnInProgress = true;
 
         TeleportToRandomStart(d);
+        ResetDoorPuzzle(d);
         RefreshLevers(d);
 
         // Close door visually if present (door itself doesn’t trigger escape)
@@ -225,6 +226,20 @@ public class SessionDirectorAdditive : MonoBehaviour
     }
 
     // -------------------- Helpers --------------------
+    private void ResetDoorPuzzle(ContextDescriptor d)
+    {
+        var manager = d.doorLockManager;
+        if (!manager) manager = d.GetComponentInChildren<DoorLockManager>(true);
+
+        if (manager)
+        {
+            manager.ResetPuzzle();
+            return;
+        }
+
+        if (d.door) d.door.LockDoor();
+    }
+
     private IEnumerator LoadContext(ContextId id, string sceneName)
     {
         if (string.IsNullOrEmpty(sceneName))

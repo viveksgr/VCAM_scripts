@@ -12,10 +12,13 @@ public class DoorLockManager : MonoBehaviour
     [SerializeField] private DoorFeedbackUI doorFeedback;  // assign in Inspector
 
     private bool l1On, l2On, l3On;
+    private bool unlocked;
     private int sequenceStep = 0; // 0→1→2→3 (3 = unlocked)
 
     void Awake()
     {
+        ResetPuzzle();
+
         lever1.OnInteract += OnLever1Changed;
         lever2.OnInteract += OnLever2Changed;
         lever3.OnInteract += OnLever3Changed;
@@ -65,7 +68,7 @@ public class DoorLockManager : MonoBehaviour
             sequenceStep = ComputePrefixOn();
         }
 
-        if (sequenceStep == 3) UnlockDoor();
+        if (sequenceStep == 3 && !unlocked) UnlockDoor();
     }
 
     int ComputePrefixOn()
@@ -75,8 +78,19 @@ public class DoorLockManager : MonoBehaviour
         return l3On ? 3 : 2;
     }
 
+    public void ResetPuzzle()
+    {
+        l1On = false;
+        l2On = false;
+        l3On = false;
+        sequenceStep = 0;
+        unlocked = false;
+        door.LockDoor();
+    }
+
     void UnlockDoor()
     {
+        unlocked = true;
         door.Unlock();
         Debug.Log("Door unlocked!");
         DataLogger.Instance?.LogEvent("DOOR_UNLOCKED");

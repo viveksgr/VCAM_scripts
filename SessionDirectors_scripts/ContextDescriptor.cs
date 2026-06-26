@@ -12,6 +12,7 @@ public class ContextDescriptor : MonoBehaviour
 
     [Header("Door (optional)")]
     public DoorScript.Door door;                                    // your existing door (can be null)
+    public DoorLockManager doorLockManager;
 
     [Header("Lever placement (choose ONE)")]
     public LeverPlacer placer;       // moves 3 existing levers to 3 of 15 points
